@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orbital Weirdness Atlas — Portfolio Case Study</title>
+<meta name="description" content="An interpretable anomaly-detection analysis of approximately 1.55 million JPL small-body orbits using R.">
+<style>
+:root {
+  --ink:#182033; --muted:#5a6578; --paper:#f7f8fb; --card:#fff;
+  --accent:#3448c5; --accent2:#008b8b; --line:#dfe3eb; --warm:#b44f2e;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.62}
+a{color:var(--accent)}
+.hero{background:linear-gradient(130deg,#111833,#25368f 62%,#147c87);color:#fff;padding:84px 24px 72px}
+.wrap{max-width:1120px;margin:auto}
+.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-weight:700;font-size:.78rem;opacity:.82}
+h1{font-size:clamp(2.6rem,7vw,5.4rem);line-height:1.02;margin:.3rem 0 1rem;max-width:980px}
+.lede{font-size:1.25rem;max-width:820px;color:#e9edff}
+.badges{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+.badge{padding:7px 12px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:rgba(255,255,255,.10);font-size:.9rem}
+main{padding:50px 24px 80px}
+section{margin:0 auto 74px;max-width:1120px}
+h2{font-size:2rem;line-height:1.15;margin-bottom:16px}
+h3{font-size:1.25rem;margin:26px 0 8px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 8px 24px rgba(19,27,53,.05)}
+.stat b{display:block;font-size:2rem;color:var(--accent);line-height:1.1}.stat span{color:var(--muted);font-size:.92rem}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px;box-shadow:0 10px 30px rgba(19,27,53,.06)}
+figure{margin:28px 0;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 10px 30px rgba(19,27,53,.06)}
+figure img{width:100%;height:auto;display:block;border-radius:10px}
+figcaption{padding:12px 8px 4px;color:var(--muted);font-size:.95rem}
+.math{font-family:"STIX Two Text",Cambria,serif;font-size:1.2rem;background:#f2f4fb;border-left:4px solid var(--accent);padding:18px 22px;border-radius:8px;margin:18px 0}
+table{width:100%;border-collapse:collapse;font-size:.92rem;background:#fff}
+th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line)}
+th{background:#f0f2f8}
+.callout{border-left:5px solid var(--accent2);background:#edf9f8;padding:20px 24px;border-radius:8px;margin:25px 0}
+.warning{border-left-color:var(--warm);background:#fff4ef}
+ul.clean{padding-left:1.2rem}
+.footer{border-top:1px solid var(--line);padding-top:25px;color:var(--muted);font-size:.9rem}
+@media(max-width:900px){.grid{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}}
+@media(max-width:580px){.grid{grid-template-columns:1fr}.hero{padding-top:60px}main{padding-left:15px;padding-right:15px}.card{padding:20px}table{font-size:.78rem}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+<div class="eyebrow">Scientific computing · orbital mechanics · interpretable anomaly detection</div>
+<h1>Orbital Weirdness Atlas</h1>
+<p class="lede">I built a reproducible R pipeline to retrieve, quality-screen, rank, and visualize approximately 1.55 million objects from NASA/JPL’s Small-Body Database. The project asks whether “departure from a circular, coplanar, prograde orbit” can be summarized in a useful, interpretable number.</p>
+<div class="badges"><span class="badge">R</span><span class="badge">JPL SBDB API</span><span class="badge">≈1.55M orbits</span><span class="badge">Parquet pipeline</span><span class="badge">Robust statistics</span><span class="badge">Reproducible analysis</span></div>
+</div></header>
+<main>
+<section>
+<div class="grid">
+<div class="stat"><b>52.4×</b><span>Centaur enrichment in the global top 1% of W<sub>visible</sub></span></div>
+<div class="stat"><b>98.4%</b><span>Inclination contribution among the weirdest 1% of Jupiter Trojans</span></div>
+<div class="stat"><b>−0.99998</b><span>Spearman correlation between W<sub>visible</sub> and H<sub>KL</sub>: an important redundancy finding</span></div>
+<div class="stat"><b>88.3%</b><span>Unrestricted main-belt leaders retained after orbit-quality screening</span></div>
+</div>
+</section>
+
+<section class="two">
+<div class="card"><h2>The question</h2>
+<p>Can a compact geometric index identify unusual small-body orbits, reveal meaningful differences among established orbital classes, and surface individual objects worth further investigation?</p>
+<p>The reference state is the dynamically ordinary Solar-System geometry: a circular orbit in the ecliptic plane moving prograde.</p>
+</div>
+<div class="card"><h2>The metric</h2>
+<div class="math">W<sub>visible</sub> = √[ e² + (2 sin(i/2))² ]</div>
+<p><em>e</em> is eccentricity and <em>i</em> is inclination. The metric is zero for a circular, coplanar, prograde orbit and increases with eccentricity, plane tilt, and retrograde orientation.</p>
+<div class="math">H<sub>KL</sub> = √(1 − e²) cos i</div>
+<p>I retained the signed Kozai–Lidov angular-momentum-like quantity as a physically meaningful comparator rather than forcing it into a second arbitrary score.</p>
+</div>
+</section>
+
+<section><h2>Pipeline and quality controls</h2>
+<div class="two">
+<div class="card"><h3>Data engineering</h3><ul class="clean">
+<li>Paginated full-population download from the JPL SBDB Query API.</li>
+<li>Timestamped local snapshots to prevent a changing live database from silently altering results.</li>
+<li>Resumable Parquet storage with automatic compression-codec fallback.</li>
+<li>Schema normalization for identifiers that alternate between numeric-looking and textual values.</li>
+</ul></div>
+<div class="card"><h3>Scientific safeguards</h3><ul class="clean">
+<li>Restricted the primary study to bound asteroid orbits with 0 ≤ e &lt; 1.</li>
+<li>Compared the full sample with a condition-code ≤ 5 quality screen.</li>
+<li>Propagated reported σ<sub>e</sub> and σ<sub>i</sub> into approximate metric uncertainty.</li>
+<li>Used full populations for statistics and class-stratified samples only for plotting.</li>
+</ul></div>
+</div>
+<figure><img src="assets/01_eccentricity_inclination_density.png" alt="Density of asteroid orbits in eccentricity-inclination space"><figcaption>The complete quality-screened population reveals a dense ordinary core and sparse high-eccentricity, high-inclination tails.</figcaption></figure>
+</section>
+
+<section><h2>Result 1: the index recovers interpretable population structure</h2>
+<p>The metric does not merely produce a leaderboard. Known populations occupy distinct distributions: Apollos and Centaurs have high central W<sub>visible</sub>; the main belt is concentrated near low values; TNOs have a modest median but an enormous extreme tail.</p>
+<figure><img src="assets/03_metric_distributions_by_class.png" alt="W visible and H KL distributions by orbital class"><figcaption>Class distributions are physically interpretable, but still overlap substantially—useful behavior for a descriptive index rather than a disguised class label.</figcaption></figure>
+<figure><img src="assets/06_top_W_visible_class_enrichment.png" alt="Orbit classes enriched in global top one percent"><figcaption>Centaurs and Apollos are enriched by roughly fiftyfold in the global top 1%, while ordinary main-belt populations are strongly depleted.</figcaption></figure>
+</section>
+
+<section><h2>Result 2: class-relative scoring finds different kinds of outlier</h2>
+<p>Global ranks mainly return classes that are already geometrically extreme. I therefore added within-class percentile, robust-MAD z-score, and empirical rank surprisal. This surfaces objects that are unusual <em>for their own peers</em>.</p>
+<div class="card" style="overflow-x:auto"><table><thead><tr><th>Class</th><th>Class leader</th><th>e</th><th>i</th><th>W</th><th>Robust z</th><th>Primary driver</th></tr></thead><tbody><tr><td>Amor</td><td>(2016 XK24)</td><td>0.991</td><td>145.7°</td><td>2.152</td><td>12.1</td><td>Inclination</td></tr><tr><td>Apollo</td><td>(2020 BZ12)</td><td>0.922</td><td>165.6°</td><td>2.188</td><td>7.4</td><td>Inclination</td></tr><tr><td>Centaur</td><td>(2025 MH)</td><td>0.897</td><td>175.5°</td><td>2.190</td><td>6.4</td><td>Inclination</td></tr><tr><td>Inner main belt</td><td>143219 (2002 YY3)</td><td>0.052</td><td>55.4°</td><td>0.931</td><td>11.4</td><td>Inclination</td></tr><tr><td>Jupiter Trojan</td><td>83983 (2002 GE39)</td><td>0.127</td><td>55.4°</td><td>0.938</td><td>5.2</td><td>Inclination</td></tr><tr><td>Trans-Neptunian</td><td>(A/2021 E2)</td><td>0.989</td><td>167.5°</td><td>2.221</td><td>6.9</td><td>Inclination</td></tr></tbody></table></div>
+<figure><img src="assets/07_top_objects_within_class.png" alt="Most unusual objects within each orbital class"><figcaption>The method detects qualitatively different anomalies: highly inclined but nearly circular inner-belt objects, and highly eccentric retrograde Centaurs and TNOs.</figcaption></figure>
+</section>
+
+<section><h2>Result 3: inclination dominates the extreme within-class tails</h2>
+<p>Ordinary near-Earth classes are often eccentricity-dominated. Yet among the top 1% inside nearly every class, the inclination term becomes dominant. For Jupiter Trojans and inner-main-belt objects, the weirdest tail is more than 96% inclination-driven on average.</p>
+<figure><img src="assets/08_W_visible_component_decomposition_by_class.png" alt="Eccentricity and inclination contributions to W visible"><figcaption>The decomposition turns a scalar anomaly score back into an interpretable physical explanation.</figcaption></figure>
+<figure><img src="assets/09_class_relative_eccentricity_inclination.png" alt="Class-relative eccentricity inclination plots"><figcaption>Within-class percentiles produce smooth, class-specific gradients and reveal distinct tails, including retrograde populations.</figcaption></figure>
+</section>
+
+<section><h2>Result 4: the leaders are not simply uncertainty artifacts</h2>
+<p>Most extreme, quality-screened objects have metric uncertainties many orders of magnitude below their W<sub>visible</sub> values. Exact leaderboards do change when weak orbit solutions are removed, but the broader population signal remains.</p>
+<figure><img src="assets/05_W_visible_uncertainty.png" alt="Metric uncertainty versus W visible"><figcaption>Large W<sub>visible</sub> is generally not produced by large formal uncertainty. The remaining high-uncertainty cases are identifiable and can be excluded or analyzed separately.</figcaption></figure>
+<div class="callout"><strong>Important interpretation:</strong> Jaccard overlap in the original stability figure is depressed when quality screening changes the size of a class. Directional retention is therefore more informative: every screened Apollo, Amor, Aten, Centaur, TNO, and Trojan leader was already present in the corresponding unrestricted leader set.</div>
+</section>
+
+<section><h2>Result 5: a useful negative result</h2>
+<p>W<sub>visible</sub> and signed H<sub>KL</sub> rank the observed population almost identically. For the dense low-e, low-i population,</p>
+<div class="math">H<sub>KL</sub> ≈ 1 − W<sub>visible</sub>² / 2</div>
+<p>The analysis therefore rejected the idea that these were two independent weirdness dimensions. W<sub>visible</sub> remains the more intuitive descriptive score; H<sub>KL</sub> contributes physical interpretation and preserves the prograde/retrograde sign.</p>
+<figure><img src="assets/02_W_visible_vs_H_KL.png" alt="W visible versus H KL"><figcaption>The near-one-dimensional relation is visually obvious and quantitatively extreme. Finding redundancy rather than hiding it is part of the project’s scientific value.</figcaption></figure>
+</section>
+
+<section><h2>What the project demonstrates</h2>
+<div class="two">
+<div class="card"><h3>Technical skills</h3><ul class="clean"><li>R, tidyverse, ggplot2, Arrow/Parquet, API ingestion</li><li>large-data workflow design and failure recovery</li><li>robust rankings, enrichment analysis, information measures</li><li>uncertainty propagation and sensitivity analysis</li><li>publication-style visualization and scientific communication</li></ul></div>
+<div class="card"><h3>Research judgment</h3><ul class="clean"><li>distinguishing global from class-relative anomaly detection</li><li>recognizing selection effects and missing physical-property data</li><li>separating descriptive geometry from dynamical interpretation</li><li>reporting a strong null/redundancy result</li><li>designing a clear route from exploratory analysis to dynamical validation</li></ul></div>
+</div>
+</section>
+
+<section><h2>Limitations and next experiments</h2>
+<div class="callout warning"><strong>Current claim:</strong> W<sub>visible</sub> is an interpretable descriptive index of orbital geometry. It is not yet established as a predictor of long-term dynamical instability.</div>
+<ul class="clean">
+<li>Benchmark against eccentricity alone, inclination alone, Mahalanobis distance, density-based anomaly scores, and established orbital-similarity criteria.</li>
+<li>Add a direction-blind plane metric, W<sub>plane</sub>, to separate geometric plane tilt from retrograde motion.</li>
+<li>Retrieve full covariance matrices for top-ranked objects and Monte Carlo their rank uncertainty.</li>
+<li>Integrate high-, median-, and low-W objects with an N-body code to test whether class-relative weirdness predicts encounters, resonance changes, or survival time.</li>
+</ul>
+</section>
+
+<section><h2>Repository map</h2>
+<div class="card"><pre>README.md                  Project overview for GitHub
+index.html                 This visual case study
+CASE_STUDY.md              Editable long-form narrative
+PORTFOLIO_COPY.md          Resume bullets and interview summary
+assets/                    Selected figures
+data/                      Derived result tables
+src/README.md              Where to place the R pipeline scripts</pre></div>
+<p class="footer">Data source: NASA/JPL Small-Body Database Query API. Replace the placeholder author, repository URL, and contact details in the editable files before publishing.</p>
+</section>
+</main>
+</body></html>
