@@ -319,6 +319,18 @@ download_sbdb_pages <- function(
     auto_unbox = TRUE
   )
 
+  if (manifest$count_changed_during_download) {
+    warning(
+      "The live SBDB catalog changed during pagination (",
+      format(total, big.mark = ","),
+      " at the start; ",
+      format(count_at_end, big.mark = ","),
+      " at the end). The manifest records both counts. Review the downstream ",
+      "SPK-ID checks before treating this download as an immutable snapshot.",
+      call. = FALSE
+    )
+  }
+
   invisible(manifest)
 }
 

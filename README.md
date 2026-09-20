@@ -30,6 +30,8 @@ Open [`index.html`](index.html) in a browser. It is a static, portable portfolio
 
 ## Reproduce the analysis
 
+For a detailed account of the repository repair, validation evidence, and a reusable setup recipe, see [`SETUP_AND_REPRODUCIBILITY_REPORT.md`](SETUP_AND_REPRODUCIBILITY_REPORT.md).
+
 ### Requirements
 
 - R 4.3.3 or a compatible newer R release;
