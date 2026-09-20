@@ -1,0 +1,16 @@
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+renv/library/
+renv/staging/
+renv/python/
+
+data/raw/
+data/processed/
+*.parquet
+*.tmp
+
+.DS_Store
+Thumbs.db

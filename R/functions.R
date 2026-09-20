@@ -12,7 +12,7 @@ check_packages <- function(packages = required_packages) {
   if (length(missing) > 0L) {
     stop(
       "Missing packages: ", paste(missing, collapse = ", "),
-      "\nRun: Rscript 00_install_packages.R",
+      "\nRestore the locked environment with: Rscript 00_install_packages.R",
       call. = FALSE
     )
   }
@@ -69,31 +69,52 @@ sbdb_request <- function(
     endpoint,
     query,
     max_retries = 6L,
-    timeout_seconds = 180
+    timeout_seconds = 180,
+    user_agent = "orbital-weirdness-atlas/1.0 (contact: Synapse8087@proton.me)",
+    expected_api_version = "1.0"
 ) {
   req <- httr2::request(endpoint)
   req <- do.call(httr2::req_url_query, c(list(req), query))
   req <- req |>
-    httr2::req_user_agent(
-      "SBDB orbital-weirdness research project; R/httr2"
-    ) |>
+    httr2::req_user_agent(user_agent) |>
     httr2::req_timeout(timeout_seconds) |>
     httr2::req_retry(
       max_tries = max_retries,
-      retry_on_failure = TRUE,
       backoff = function(attempt) min(60, 2 ^ attempt)
     )
 
   resp <- httr2::req_perform(req)
   httr2::resp_check_status(resp)
-  httr2::resp_body_json(resp, simplifyVector = FALSE)
+  payload <- httr2::resp_body_json(resp, simplifyVector = FALSE)
+
+  api_version <- payload$signature$version
+  if (is.null(api_version) || length(api_version) != 1L) {
+    stop(
+      "SBDB response did not contain `signature.version`; refusing to parse an unversioned response.",
+      call. = FALSE
+    )
+  }
+
+  api_version <- as.character(api_version[[1]])
+  if (!identical(api_version, expected_api_version)) {
+    stop(
+      "SBDB API version changed from ", expected_api_version,
+      " to ", api_version,
+      ". Review the API documentation before continuing.",
+      call. = FALSE
+    )
+  }
+
+  payload
 }
 
 sbdb_count <- function(
     endpoint,
     sb_kind,
     constraints,
-    max_retries = 6L
+    max_retries = 6L,
+    user_agent = "orbital-weirdness-atlas/1.0 (contact: Synapse8087@proton.me)",
+    expected_api_version = "1.0"
 ) {
   payload <- sbdb_request(
     endpoint = endpoint,
@@ -105,7 +126,9 @@ sbdb_count <- function(
         null = "null"
       )
     ),
-    max_retries = max_retries
+    max_retries = max_retries,
+    user_agent = user_agent,
+    expected_api_version = expected_api_version
   )
 
   if (is.null(payload$count)) {
@@ -185,7 +208,9 @@ download_sbdb_pages <- function(
     output_dir,
     page_size = 50000L,
     pause_seconds = 0.20,
-    max_retries = 6L
+    max_retries = 6L,
+    user_agent = "orbital-weirdness-atlas/1.0 (contact: Synapse8087@proton.me)",
+    expected_api_version = "1.0"
 ) {
   dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -196,7 +221,9 @@ download_sbdb_pages <- function(
     endpoint = endpoint,
     sb_kind = sb_kind,
     constraints = constraints,
-    max_retries = max_retries
+    max_retries = max_retries,
+    user_agent = user_agent,
+    expected_api_version = expected_api_version
   )
 
   message("Matching SBDB objects at start of download: ", format(total, big.mark = ","))
@@ -242,7 +269,9 @@ download_sbdb_pages <- function(
         "sb-kind" = sb_kind,
         "sb-cdata" = constraints_json
       ),
-      max_retries = max_retries
+      max_retries = max_retries,
+      user_agent = user_agent,
+      expected_api_version = expected_api_version
     )
 
     page <- parse_sbdb_page(payload)
@@ -264,11 +293,15 @@ download_sbdb_pages <- function(
     endpoint = endpoint,
     sb_kind = sb_kind,
     constraints = constraints,
-    max_retries = max_retries
+    max_retries = max_retries,
+    user_agent = user_agent,
+    expected_api_version = expected_api_version
   )
 
   manifest <- list(
     endpoint = endpoint,
+    api_version = expected_api_version,
+    user_agent = user_agent,
     retrieved_utc = format(Sys.time(), tz = "UTC", usetz = TRUE),
     count_at_start = total,
     count_at_end = count_at_end,

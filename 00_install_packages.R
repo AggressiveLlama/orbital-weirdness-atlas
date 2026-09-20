@@ -1,15 +1,19 @@
 # Stephen Gray July 2026
 # Synapse8087@proton.me
-packages <- c(
-  "arrow", "dplyr", "ggplot2", "hexbin", "httr2", "jsonlite",
-  "purrr", "readr", "rlang", "scales", "stringr", "tibble", "tidyr"
-)
+# Restore the exact package versions recorded in renv.lock.
 
-missing <- packages[!vapply(packages, requireNamespace, logical(1), quietly = TRUE)]
-
-if (length(missing) == 0L) {
-  message("All required packages are already installed.")
-} else {
-  message("Installing: ", paste(missing, collapse = ", "))
-  install.packages(missing, repos = "https://cloud.r-project.org")
+repos <- getOption("repos")
+if (
+  is.null(repos) ||
+    is.null(repos[["CRAN"]]) ||
+    identical(unname(repos[["CRAN"]]), "@CRAN@")
+) {
+  options(repos = c(CRAN = "https://cloud.r-project.org"))
 }
+
+if (!requireNamespace("renv", quietly = TRUE)) {
+  install.packages("renv")
+}
+
+renv::restore(prompt = FALSE)
+message("The locked R environment is ready.")
