@@ -90,30 +90,30 @@ ul.clean{padding-left:1.2rem}
 <li>Used full populations for statistics and class-stratified samples only for plotting.</li>
 </ul></div>
 </div>
-<figure><img src="assets/01_eccentricity_inclination_density.png" alt="Density of asteroid orbits in eccentricity-inclination space"><figcaption>The complete quality-screened population reveals a dense ordinary core and sparse high-eccentricity, high-inclination tails.</figcaption></figure>
+<figure><img src="results/figures/01_eccentricity_inclination_density.png" alt="Density of asteroid orbits in eccentricity-inclination space"><figcaption>The complete quality-screened population reveals a dense ordinary core and sparse high-eccentricity, high-inclination tails.</figcaption></figure>
 </section>
 
 <section><h2>Result 1: the index recovers interpretable population structure</h2>
 <p>The metric does not merely produce a leaderboard. Known populations occupy distinct distributions: Apollos and Centaurs have high central W<sub>visible</sub>; the main belt is concentrated near low values; TNOs have a modest median but an enormous extreme tail.</p>
-<figure><img src="assets/03_metric_distributions_by_class.png" alt="W visible and H KL distributions by orbital class"><figcaption>Class distributions are physically interpretable, but still overlap substantially—useful behavior for a descriptive index rather than a disguised class label.</figcaption></figure>
-<figure><img src="assets/06_top_W_visible_class_enrichment.png" alt="Orbit classes enriched in global top one percent"><figcaption>Centaurs and Apollos are enriched by roughly fiftyfold in the global top 1%, while ordinary main-belt populations are strongly depleted.</figcaption></figure>
+<figure><img src="results/figures/03_metric_distributions_by_class.png" alt="W visible and H KL distributions by orbital class"><figcaption>Class distributions are physically interpretable, but still overlap substantially—useful behavior for a descriptive index rather than a disguised class label.</figcaption></figure>
+<figure><img src="results/figures/06_top_W_visible_class_enrichment.png" alt="Orbit classes enriched in global top one percent"><figcaption>Centaurs and Apollos are enriched by roughly fiftyfold in the global top 1%, while ordinary main-belt populations are strongly depleted.</figcaption></figure>
 </section>
 
 <section><h2>Result 2: class-relative scoring finds different kinds of outlier</h2>
 <p>Global ranks mainly return classes that are already geometrically extreme. I therefore added within-class percentile, robust-MAD z-score, and empirical rank surprisal. This surfaces objects that are unusual <em>for their own peers</em>.</p>
 <div class="card" style="overflow-x:auto"><table><thead><tr><th>Class</th><th>Class leader</th><th>e</th><th>i</th><th>W</th><th>Robust z</th><th>Primary driver</th></tr></thead><tbody><tr><td>Amor</td><td>(2016 XK24)</td><td>0.991</td><td>145.7°</td><td>2.152</td><td>12.1</td><td>Inclination</td></tr><tr><td>Apollo</td><td>(2020 BZ12)</td><td>0.922</td><td>165.6°</td><td>2.188</td><td>7.4</td><td>Inclination</td></tr><tr><td>Centaur</td><td>(2025 MH)</td><td>0.897</td><td>175.5°</td><td>2.190</td><td>6.4</td><td>Inclination</td></tr><tr><td>Inner main belt</td><td>143219 (2002 YY3)</td><td>0.052</td><td>55.4°</td><td>0.931</td><td>11.4</td><td>Inclination</td></tr><tr><td>Jupiter Trojan</td><td>83983 (2002 GE39)</td><td>0.127</td><td>55.4°</td><td>0.938</td><td>5.2</td><td>Inclination</td></tr><tr><td>Trans-Neptunian</td><td>(A/2021 E2)</td><td>0.989</td><td>167.5°</td><td>2.221</td><td>6.9</td><td>Inclination</td></tr></tbody></table></div>
-<figure><img src="assets/07_top_objects_within_class.png" alt="Most unusual objects within each orbital class"><figcaption>The method detects qualitatively different anomalies: highly inclined but nearly circular inner-belt objects, and highly eccentric retrograde Centaurs and TNOs.</figcaption></figure>
+<figure><img src="results/figures/07_top_objects_within_class.png" alt="Most unusual objects within each orbital class"><figcaption>The method detects qualitatively different anomalies: highly inclined but nearly circular inner-belt objects, and highly eccentric retrograde Centaurs and TNOs.</figcaption></figure>
 </section>
 
 <section><h2>Result 3: inclination dominates the extreme within-class tails</h2>
 <p>Ordinary near-Earth classes are often eccentricity-dominated. Yet among the top 1% inside nearly every class, the inclination term becomes dominant. For Jupiter Trojans and inner-main-belt objects, the weirdest tail is more than 96% inclination-driven on average.</p>
-<figure><img src="assets/08_W_visible_component_decomposition_by_class.png" alt="Eccentricity and inclination contributions to W visible"><figcaption>The decomposition turns a scalar anomaly score back into an interpretable physical explanation.</figcaption></figure>
-<figure><img src="assets/09_class_relative_eccentricity_inclination.png" alt="Class-relative eccentricity inclination plots"><figcaption>Within-class percentiles produce smooth, class-specific gradients and reveal distinct tails, including retrograde populations.</figcaption></figure>
+<figure><img src="results/figures/08_W_visible_component_decomposition_by_class.png" alt="Eccentricity and inclination contributions to W visible"><figcaption>The decomposition turns a scalar anomaly score back into an interpretable physical explanation.</figcaption></figure>
+<figure><img src="results/figures/09_class_relative_eccentricity_inclination.png" alt="Class-relative eccentricity inclination plots"><figcaption>Within-class percentiles produce smooth, class-specific gradients and reveal distinct tails, including retrograde populations.</figcaption></figure>
 </section>
 
 <section><h2>Result 4: the leaders are not simply uncertainty artifacts</h2>
 <p>Most extreme, quality-screened objects have metric uncertainties many orders of magnitude below their W<sub>visible</sub> values. Exact leaderboards do change when weak orbit solutions are removed, but the broader population signal remains.</p>
-<figure><img src="assets/05_W_visible_uncertainty.png" alt="Metric uncertainty versus W visible"><figcaption>Large W<sub>visible</sub> is generally not produced by large formal uncertainty. The remaining high-uncertainty cases are identifiable and can be excluded or analyzed separately.</figcaption></figure>
+<figure><img src="results/figures/05_W_visible_uncertainty.png" alt="Metric uncertainty versus W visible"><figcaption>Large W<sub>visible</sub> is generally not produced by large formal uncertainty. The remaining high-uncertainty cases are identifiable and can be excluded or analyzed separately.</figcaption></figure>
 <div class="callout"><strong>Important interpretation:</strong> Jaccard overlap in the original stability figure is depressed when quality screening changes the size of a class. Directional retention is therefore more informative: every screened Apollo, Amor, Aten, Centaur, TNO, and Trojan leader was already present in the corresponding unrestricted leader set.</div>
 </section>
 
@@ -121,7 +121,7 @@ ul.clean{padding-left:1.2rem}
 <p>W<sub>visible</sub> and signed H<sub>KL</sub> rank the observed population almost identically. For the dense low-e, low-i population,</p>
 <div class="math">H<sub>KL</sub> ≈ 1 − W<sub>visible</sub>² / 2</div>
 <p>The analysis therefore rejected the idea that these were two independent weirdness dimensions. W<sub>visible</sub> remains the more intuitive descriptive score; H<sub>KL</sub> contributes physical interpretation and preserves the prograde/retrograde sign.</p>
-<figure><img src="assets/02_W_visible_vs_H_KL.png" alt="W visible versus H KL"><figcaption>The near-one-dimensional relation is visually obvious and quantitatively extreme. Finding redundancy rather than hiding it is part of the project’s scientific value.</figcaption></figure>
+<figure><img src="results/figures/02_W_visible_vs_H_KL.png" alt="W visible versus H KL"><figcaption>The near-one-dimensional relation is visually obvious and quantitatively extreme. Finding redundancy rather than hiding it is part of the project’s scientific value.</figcaption></figure>
 </section>
 
 <section><h2>What the project demonstrates</h2>
@@ -146,10 +146,13 @@ ul.clean{padding-left:1.2rem}
 index.html                 This visual case study
 CASE_STUDY.md              Editable long-form narrative
 PORTFOLIO_COPY.md          Resume bullets and interview summary
-assets/                    Selected figures
-data/                      Derived result tables
-src/README.md              Where to place the R pipeline scripts</pre></div>
-<p class="footer">Data source: NASA/JPL Small-Body Database Query API. Replace the placeholder author, repository URL, and contact details in the editable files before publishing.</p>
+R/functions.R              Shared pipeline functions
+data/                      Local raw and processed data (not committed)
+results/figures/           Generated figures used by this page
+results/tables/            Compact analysis outputs
+renv.lock                  Reproducible R package versions
+tests/smoke_test.R         Network-free validation checks</pre></div>
+<p class="footer">Data source: NASA/JPL Small-Body Database Query API.</p>
 </section>
 </main>
 </body></html>

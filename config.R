@@ -3,6 +3,12 @@
 # Project configuration --------------------------------------------------------
 
 SBDB_ENDPOINT <- "https://ssd-api.jpl.nasa.gov/sbdb_query.api"
+SBDB_EXPECTED_API_VERSION <- "1.0"
+SBDB_USER_AGENT <- paste(
+  "orbital-weirdness-atlas/1.0",
+  "(contact: Synapse8087@proton.me)",
+  "R/httr2"
+)
 
 # JPL's public SBDB Query API does not currently document an API-key parameter.
 # Leave authentication out unless JPL gives you endpoint-specific instructions.
