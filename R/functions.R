@@ -325,8 +325,10 @@ download_sbdb_pages <- function(
       format(total, big.mark = ","),
       " at the start; ",
       format(count_at_end, big.mark = ","),
-      " at the end). The manifest records both counts. Review the downstream ",
-      "SPK-ID checks before treating this download as an immutable snapshot.",
+      " at the end). The manifest records both counts. Check downstream SPK IDs ",
+      "for blanks and duplicates; these checks do not establish that all pages ",
+      "represent one consistent state of the live catalog. Preserve the downloaded ",
+      "files with checksums in a versioned archive for exact reuse of these inputs.",
       call. = FALSE
     )
   }
