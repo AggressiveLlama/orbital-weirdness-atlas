@@ -2,15 +2,19 @@
 
 **Prepared:** 2026-09-19
 
+**Merged:** 2026-10-31, [PR #1](https://github.com/AggressiveLlama/orbital-weirdness-atlas/pull/1)
+
+**Merge commit:** [`4804830`](https://github.com/AggressiveLlama/orbital-weirdness-atlas/commit/48048300f87a9d8eeaa48753cf5309648b3a1881)
+
 **Repository:** `AggressiveLlama/orbital-weirdness-atlas`
 
-**Repair branch:** `codex/reproducible-setup`
+**Historical repair branch:** `codex/reproducible-setup`
 
 **Starting commit:** `a5144c4` (`Add files via upload`)
 
 ## Outcome
 
-The repository is now a runnable, pinned R project rather than a flat collection of scripts and outputs. It has:
+The October 31 merge established a runnable R project with locked package dependencies. The repair provides:
 
 - a conventional project layout with working paths;
 - an R 4.3.3 `renv` lockfile containing 57 packages;
@@ -18,9 +22,13 @@ The repository is now a runnable, pinned R project rather than a flat collection
 - deterministic, network-free smoke tests;
 - a GitHub Actions workflow for clean-room checks;
 - documentation for setup, execution, data, results, and limitations;
-- a successful end-to-end validation against the current JPL SBDB catalog.
+- a documented successful end-to-end validation against the September 2026 JPL SBDB catalog.
 
 The committed July 2026 scientific outputs were preserved and reorganized. The September validation run was performed in a separate clean clone so a live-data refresh could not silently rewrite the published case study.
+
+> Environment restoration and pipeline execution were validated in a clean clone. Exact reproduction of the July 2026 results still requires the original July inputs, archived with checksums and provenance tied to the matching code and configuration. The score describes orbital geometry; predictive utility for dynamical instability remains untested.
+
+The [README](README.md#project-summary) owns the canonical project description and quick start; the [case study](CASE_STUDY.md) owns scientific interpretation and research priorities. This report records the repair and its dated execution evidence.
 
 ## 1. What the audit found
 
@@ -89,29 +97,6 @@ That script performs only three setup jobs:
 
 The project-local library is excluded from Git. The small activation scripts and lockfile are committed; downloaded package binaries and source trees are not.
 
-### How to apply this pattern to another R repository
-
-From the repository root:
-
-```r
-install.packages("renv")
-renv::init(bare = TRUE)
-renv::install(c("arrow", "dplyr", "ggplot2"))
-renv::snapshot()
-```
-
-Commit `renv.lock`, `.Rprofile`, and `renv/activate.R`. Do not commit `renv/library/`.
-
-When changing a dependency later, make the change intentionally and snapshot it:
-
-```r
-renv::install("package-name@version")
-renv::snapshot()
-renv::status()
-```
-
-Review the lockfile diff before committing it. A lockfile is useful because it makes dependency changes visible, not merely because it exists.
-
 ## 4. Pipeline and data-snapshot controls
 
 The complete analysis now runs with:
@@ -146,6 +131,8 @@ The downloader:
 - records start/end counts, fields, constraints, API version, and retrieval time in `manifest.json`;
 - warns visibly if the live catalog count changes during pagination.
 
+The query targets asteroids with `0 <= e < 1` and a defined inclination. Timestamped local files and manifests preserve the retrieved pages and their metadata; they do not freeze the live API. Stable sorting, atomic writes, and resume behavior do not guarantee a single consistent catalog state across pages.
+
 ## 5. Automated checks added
 
 Run the local test with:
@@ -166,11 +153,11 @@ It checks:
 - eccentricity and inclination component shares sum to one for nonzero scores;
 - a Parquet write/read round trip preserves rows and identifiers.
 
-The GitHub Actions workflow restores R 4.3.3 and the locked package library, verifies `renv::status()`, and runs the same smoke test on every push and pull request.
+The GitHub Actions workflow is configured to restore R 4.3.3 and the locked package library, check `renv::status()`, and run the same smoke test on pushes and pull requests. Dependency restoration can require network access; the smoke test itself is network-free. The workflow does not run the full JPL download or analysis. The full live-data execution below was a separate validation run; its success is not evidence that every later CI run passed.
 
 ## 6. Validation evidence
 
-Validation was deliberately done twice: first in the repaired working tree, then in a fresh clone containing only committed files.
+In September 2026, validation was performed first in the repaired working tree, then in a fresh clone containing only committed files. The table records those historical checks, not a new run on the October merge date.
 
 | Check | Result |
 |---|---|
@@ -178,15 +165,17 @@ Validation was deliberately done twice: first in the repaired working tree, then
 | `renv::status()` | Passed; project reported a consistent state |
 | Clean-clone dependency restore | Passed; 57 locked packages restored |
 | Clean-clone smoke test | Passed |
-| Full four-stage live-data pipeline | Passed |
+| Full four-stage live-data pipeline (separate September run) | Passed |
 | Processed asteroid rows | 1,565,665 |
 | Missing/blank `spkid` values | 0 |
 | Duplicate `spkid` rows | 0 |
 | Raw snapshot size | 253 MB |
 | Processed Parquet size | 720 MB |
-| Current all-valid Spearman correlation, `W_visible` vs. `H_KL` | -0.9999753095 |
+| September all-valid Spearman correlation, `W_visible` vs. `H_KL` | -0.9999753095 |
 
-The validation download began when the JPL query reported 1,565,664 matching objects and ended at 1,565,665. That one-object change was recorded as `count_changed_during_download: true`. The final processed data contained 1,565,665 unique, nonblank SPK IDs.
+The September validation download began when the JPL query reported 1,565,664 matching objects and ended at 1,565,665. That one-object change was recorded as `count_changed_during_download: true`. The final processed data contained 1,565,665 unique, nonblank SPK IDs. These ID checks do not establish that all pages represent one consistent state of the live catalog; count checks also cannot detect every change to existing orbital solutions.
+
+The committed [July metric diagnostics](results/tables/metric_diagnostics.csv) instead contain 1,553,106 valid orbits and 1,381,626 after retaining `condition_code <= 5` or missing codes. The July summary correlation of approximately −0.999977 refers to that screened subset. The September all-valid statistic and row count describe a different run and must not silently replace the July findings.
 
 This is a useful real-world distinction:
 
@@ -194,23 +183,85 @@ This is a useful real-world distinction:
 - **data reproducibility** means the same input bytes remain available;
 - **result reproducibility** requires both.
 
-The first is now handled by the repository. The live JPL endpoint cannot provide the second by itself because the catalog changes continuously.
+The repair documents successful restoration of the package environment and pipeline execution. The lockfile does not pin every operating-system or compiled-library detail, so it alone cannot promise byte-identical outputs across platforms. The live JPL endpoint cannot supply historical input bytes on demand. Exact result reproduction also requires the matching code, configuration, and relevant runtime details.
 
 ## 7. Preserving exact historical results
 
 The repository intentionally ignores the raw and processed Parquet files because the validation copy alone occupied about 973 MB. Ignoring large data protects normal Git workflows, but exact historical reproduction needs a separate data-release strategy.
 
-For a publication-grade snapshot:
+Exact reproduction of the committed July results requires the original July input files, which are not included in this repository. Archiving the September validation inputs would preserve that run; it would not reconstruct July's inputs. If the original files cannot be recovered, archive a newly dated result set and keep exact July reproduction explicitly unresolved.
 
-1. finish a download and retain its `manifest.json`;
+For a publication-grade data release:
+
+1. identify the target run, retain its original input files and `manifest.json`, and document any known catalog drift;
 2. compute SHA-256 checksums for every raw part and processed dataset;
-3. upload the frozen snapshot to durable, versioned storage such as Zenodo, an institutional repository, or versioned object storage;
-4. record the release URL, DOI or object version, checksums, and license in `data/README.md`;
-5. tag the matching code commit in Git.
+3. upload the frozen files to durable, versioned storage such as Zenodo, an institutional repository, or versioned object storage;
+4. record the release URL, DOI or object version, checksums, provenance, license, and download/verification instructions in `data/README.md`;
+5. bind the release to the matching code commit, configuration, and lockfile, recording relevant runtime/platform details and tagging the code version.
 
-A manifest proves what the code requested and observed. A checksum plus an archived file proves which exact bytes were analyzed.
+A manifest records what the code requested and observed. Checksums identify retained bytes; an archive makes them retrievable. Connecting those files to the actual analysis run requires provenance and the matching code/configuration.
 
-## 8. Repeatable repair recipe for future repositories
+Data archiving can proceed independently of the next scientific step, baseline benchmarking. Full-covariance uncertainty analysis, fixed-k ranking-stability comparisons, and N-body tests follow in the [case-study roadmap](CASE_STUDY.md#what-i-would-do-next).
+
+## 8. Day-to-day command sheet
+
+```bash
+# First setup
+Rscript 00_install_packages.R
+
+# Fast confidence check
+Rscript tests/smoke_test.R
+Rscript -e 'renv::status()'
+
+# Complete refresh from JPL
+Rscript run_all.R
+
+# Recompute from the newest local snapshot
+Rscript run_all.R --skip-download
+
+# Resume one named snapshot
+SBDB_SNAPSHOT_ID=my_snapshot_20260919 Rscript 01_download_sbdb.R
+Rscript run_all.R --skip-download
+```
+
+Always run these commands from the repository root.
+
+## 9. Troubleshooting notes
+
+### `R/functions.R` or another relative path cannot be found
+
+Confirm the shell's current directory is the repository root. The pipeline deliberately uses project-relative paths.
+
+### Arrow fails to install
+
+Use R 4.3.3 where practical and ensure a C/C++ build toolchain is available if no suitable binary exists. Rerun `Rscript 00_install_packages.R`; `renv` will continue toward the locked state.
+
+### Parquet compression fails
+
+The helper probes codecs and selects a supported one. The September validation environment selected `zstd`. If all preferred codecs fail, check the Arrow installation rather than changing the analysis code first.
+
+### The download stopped midway
+
+Rerun `01_download_sbdb.R` with the same `SBDB_SNAPSHOT_ID`. Existing completed page files are skipped. Do not point a new query definition at an old snapshot directory.
+
+### Results differ from the committed figures
+
+First compare available input manifests, checksums, and code/configuration versions. The JPL catalog is live; row counts and orbital solutions change. Exact July comparison requires the original July inputs. A small result change is not automatically an environment failure.
+
+### The API version check fails
+
+Treat it as a schema-review prompt. Compare the current JPL documentation with `SBDB_EXPECTED_API_VERSION` and the parser before updating the expected version.
+
+## 10. Choices made deliberately
+
+- The July figures and tables were reorganized, not replaced with the September validation outputs.
+- Raw and processed Parquet data were not committed to Git.
+- The metrics remain descriptive geometry measures; no new claim of dynamical stability or causal prediction was added.
+- The September validation outputs were excluded from the merged repair; the committed scientific figures and tables remain the July results.
+
+Those boundaries keep infrastructure repair, data refresh, and scientific revision as three distinct decisions.
+
+## Appendix A: Repeatable repair recipe for future repositories
 
 ### Step A: protect and inventory
 
@@ -230,6 +281,27 @@ Put reusable code, local data, published outputs, tests, and automation in separ
 ### Step C: pin the environment
 
 Initialize `renv`, install the actual dependencies, snapshot them, and verify `renv::status()`. Restore into an empty library at least once; a lockfile copied from somewhere else is not evidence that it works.
+
+From the repository root:
+
+```r
+install.packages("renv")
+renv::init(bare = TRUE)
+renv::install(c("arrow", "dplyr", "ggplot2"))
+renv::snapshot()
+```
+
+Commit `renv.lock`, `.Rprofile`, and `renv/activate.R`. Do not commit `renv/library/`.
+
+When changing a dependency later, make the change intentionally and snapshot it:
+
+```r
+renv::install("package-name@version")
+renv::snapshot()
+renv::status()
+```
+
+Review the lockfile diff before committing it. A lockfile is useful because it makes dependency changes visible, not merely because it exists.
 
 ### Step D: create one entry point
 
@@ -277,60 +349,3 @@ git log --oneline --decorate -3
 
 Generated output changes may be scientifically valid, but they should never slip into a setup commit without review.
 
-## 9. Day-to-day command sheet
-
-```bash
-# First setup
-Rscript 00_install_packages.R
-
-# Fast confidence check
-Rscript tests/smoke_test.R
-Rscript -e 'renv::status()'
-
-# Complete refresh from JPL
-Rscript run_all.R
-
-# Recompute from the newest local snapshot
-Rscript run_all.R --skip-download
-
-# Resume one named snapshot
-SBDB_SNAPSHOT_ID=my_snapshot_20260919 Rscript 01_download_sbdb.R
-Rscript run_all.R --skip-download
-```
-
-Always run these commands from the repository root.
-
-## 10. Troubleshooting notes
-
-### `R/functions.R` or another relative path cannot be found
-
-Confirm the shell's current directory is the repository root. The pipeline deliberately uses project-relative paths.
-
-### Arrow fails to install
-
-Use R 4.3.3 where practical and ensure a C/C++ build toolchain is available if no suitable binary exists. Rerun `Rscript 00_install_packages.R`; `renv` will continue toward the locked state.
-
-### Parquet compression fails
-
-The helper probes codecs and selects a supported one. The validation environment selected `zstd`. If all preferred codecs fail, check the Arrow installation rather than changing the analysis code first.
-
-### The download stopped midway
-
-Rerun `01_download_sbdb.R` with the same `SBDB_SNAPSHOT_ID`. Existing completed page files are skipped. Do not point a new query definition at an old snapshot directory.
-
-### Results differ from the committed figures
-
-First compare the snapshot manifests. The JPL catalog is live; row counts and orbital solutions change. A small result change is not automatically an environment failure.
-
-### The API version check fails
-
-Treat it as a schema-review prompt. Compare the current JPL documentation with `SBDB_EXPECTED_API_VERSION` and the parser before updating the expected version.
-
-## 11. Choices made deliberately
-
-- The July figures and tables were reorganized, not replaced with the September validation outputs.
-- Raw and processed Parquet data were not committed to Git.
-- The metrics remain descriptive geometry measures; no new claim of dynamical stability or causal prediction was added.
-- The full validation output remains separate from the repair branch so the setup change is reviewable on its own.
-
-Those boundaries keep infrastructure repair, data refresh, and scientific revision as three distinct decisions.
