@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Orbital Weirdness Atlas — Portfolio Case Study</title>
-<meta name="description" content="An interpretable anomaly-detection analysis of approximately 1.55 million JPL small-body orbits using R.">
+<meta name="description" content="Interpretable anomaly scoring across approximately 1.55 million NASA/JPL bound asteroid orbits in R.">
 <style>
 :root {
   --ink:#182033; --muted:#5a6578; --paper:#f7f8fb; --card:#fff;
@@ -47,19 +47,23 @@ ul.clean{padding-left:1.2rem}
 </head>
 <body>
 <header class="hero"><div class="wrap">
-<div class="eyebrow">Scientific computing · orbital mechanics · interpretable anomaly detection</div>
+<div class="eyebrow">Scientific computing · orbital mechanics · interpretable anomaly scoring</div>
 <h1>Orbital Weirdness Atlas</h1>
-<p class="lede">I built a reproducible R pipeline to retrieve, quality-screen, rank, and visualize approximately 1.55 million objects from NASA/JPL’s Small-Body Database. The project asks whether “departure from a circular, coplanar, prograde orbit” can be summarized in a useful, interpretable number.</p>
-<div class="badges"><span class="badge">R</span><span class="badge">JPL SBDB API</span><span class="badge">≈1.55M orbits</span><span class="badge">Parquet pipeline</span><span class="badge">Robust statistics</span><span class="badge">Reproducible analysis</span></div>
+<p class="lede">I built an R/Arrow pipeline to retrieve, quality-screen, rank, and visualize approximately 1.55 million bound asteroid orbits from NASA/JPL’s Small-Body Database. The project asks whether “departure from a circular, coplanar, prograde orbit” can be summarized in a useful, interpretable number.</p>
+<div class="badges"><span class="badge">R</span><span class="badge">JPL SBDB API</span><span class="badge">≈1.55M orbits</span><span class="badge">Parquet pipeline</span><span class="badge">Robust statistics</span><span class="badge">Reproducible execution</span></div>
 </div></header>
 <main>
 <section>
+<h2>July 2026 findings</h2>
+<p>The July analysis contains 1,553,106 valid orbits. Enrichment, correlation, and within-class summaries use the 1,381,626-object subset retaining condition code ≤ 5 or missing codes; within-class summaries require at least 100 screened objects. Retention compares the unrestricted and screened leader sets. Retaining missing codes is a permissive screen, not a guarantee of orbit quality.</p>
 <div class="grid">
 <div class="stat"><b>52.4×</b><span>Centaur enrichment in the global top 1% of W<sub>visible</sub></span></div>
-<div class="stat"><b>98.4%</b><span>Inclination contribution among the weirdest 1% of Jupiter Trojans</span></div>
+<div class="stat"><b>98.4%</b><span>Mean inclination share of W<sub>visible</sub>² among the highest-scoring 1% of Jupiter Trojans</span></div>
 <div class="stat"><b>−0.99998</b><span>Spearman correlation between W<sub>visible</sub> and H<sub>KL</sub>: an important redundancy finding</span></div>
-<div class="stat"><b>88.3%</b><span>Unrestricted main-belt leaders retained after orbit-quality screening</span></div>
+<div class="stat"><b>88.3%</b><span>Unrestricted main-belt leaders retained in the screened top set</span></div>
 </div>
+<div class="callout"><strong>Reproducibility:</strong> Environment restoration and pipeline execution were validated in a clean clone. Exact reproduction of the July 2026 results still requires the original July inputs, archived with checksums and provenance tied to the matching code and configuration. The score describes orbital geometry; predictive utility for dynamical instability remains untested.</div>
+<p>The documented full live-data validation ran in September 2026; it did not regenerate the July results shown here. See the <a href="SETUP_AND_REPRODUCIBILITY_REPORT.md">setup report</a> for dated execution evidence and archive requirements, and the <a href="CASE_STUDY.md">case study</a> for scientific interpretation.</p>
 </section>
 
 <section class="two">
@@ -79,14 +83,14 @@ ul.clean{padding-left:1.2rem}
 <div class="two">
 <div class="card"><h3>Data engineering</h3><ul class="clean">
 <li>Paginated full-population download from the JPL SBDB Query API.</li>
-<li>Timestamped local snapshots to prevent a changing live database from silently altering results.</li>
+<li>Timestamped local data and manifests record retrieval conditions; they do not freeze the live catalog or guarantee one consistent catalog state across pages.</li>
 <li>Resumable Parquet storage with automatic compression-codec fallback.</li>
 <li>Schema normalization for identifiers that alternate between numeric-looking and textual values.</li>
 </ul></div>
 <div class="card"><h3>Scientific safeguards</h3><ul class="clean">
 <li>Restricted the primary study to bound asteroid orbits with 0 ≤ e &lt; 1.</li>
-<li>Compared the full sample with a condition-code ≤ 5 quality screen.</li>
-<li>Propagated reported σ<sub>e</sub> and σ<sub>i</sub> into approximate metric uncertainty.</li>
+<li>Compared the full sample with a screen retaining condition code ≤ 5 or missing codes.</li>
+<li>Propagated reported marginal σ<sub>e</sub> and σ<sub>i</sub> into first-order metric uncertainty, without their covariance.</li>
 <li>Used full populations for statistics and class-stratified samples only for plotting.</li>
 </ul></div>
 </div>
@@ -111,14 +115,14 @@ ul.clean{padding-left:1.2rem}
 <figure><img src="results/figures/09_class_relative_eccentricity_inclination.png" alt="Class-relative eccentricity inclination plots"><figcaption>Within-class percentiles produce smooth, class-specific gradients and reveal distinct tails, including retrograde populations.</figcaption></figure>
 </section>
 
-<section><h2>Result 4: the leaders are not simply uncertainty artifacts</h2>
-<p>Most extreme, quality-screened objects have metric uncertainties many orders of magnitude below their W<sub>visible</sub> values. Exact leaderboards do change when weak orbit solutions are removed, but the broader population signal remains.</p>
-<figure><img src="results/figures/05_W_visible_uncertainty.png" alt="Metric uncertainty versus W visible"><figcaption>Large W<sub>visible</sub> is generally not produced by large formal uncertainty. The remaining high-uncertainty cases are identifiable and can be excluded or analyzed separately.</figcaption></figure>
-<div class="callout"><strong>Important interpretation:</strong> Jaccard overlap in the original stability figure is depressed when quality screening changes the size of a class. Directional retention is therefore more informative: every screened Apollo, Amor, Aten, Centaur, TNO, and Trojan leader was already present in the corresponding unrestricted leader set.</div>
+<section><h2>Result 4: first-order uncertainty diagnostics</h2>
+<p>First-order uncertainties propagated from reported marginal σ<sub>e</sub> and σ<sub>i</sub> were generally small relative to high W<sub>visible</sub> scores. The calculation omits covariance between eccentricity and inclination, so these are diagnostics rather than complete orbital-uncertainty estimates. Quality screening changed exact leaderboards; high scores alone do not establish robust individual anomalies. Full-covariance Monte Carlo analysis remains future work.</p>
+<figure><img src="results/figures/05_W_visible_uncertainty.png" alt="Metric uncertainty versus W visible"><figcaption>First-order metric uncertainty versus W<sub>visible</sub>, using reported marginal uncertainties. Small propagated errors alone do not validate individual outliers or their rank stability.</figcaption></figure>
+<div class="callout"><strong>Ranking stability:</strong> Comparing separate top-1% sets mixes selection changes with changes in set size. The <a href="results/tables/class_rank_stability_quality_screen.csv">stability table</a> reports directional retention as the fraction of unrestricted leaders retained in the screened top set. That statistic still reflects the effects of the screen; fixed-k comparisons on a defined comparison population remain a proposed improvement.</div>
 </section>
 
 <section><h2>Result 5: a useful negative result</h2>
-<p>W<sub>visible</sub> and signed H<sub>KL</sub> rank the observed population almost identically. For the dense low-e, low-i population,</p>
+<p>W<sub>visible</sub> and signed H<sub>KL</sub> were almost perfectly inversely rank-correlated in the July screened subset (Spearman ρ ≈ −0.999977), indicating nearly redundant rankings in that sample. For low eccentricity and inclination,</p>
 <div class="math">H<sub>KL</sub> ≈ 1 − W<sub>visible</sub>² / 2</div>
 <p>The analysis therefore rejected the idea that these were two independent weirdness dimensions. W<sub>visible</sub> remains the more intuitive descriptive score; H<sub>KL</sub> contributes physical interpretation and preserves the prograde/retrograde sign.</p>
 <figure><img src="results/figures/02_W_visible_vs_H_KL.png" alt="W visible versus H KL"><figcaption>The near-one-dimensional relation is visually obvious and quantitatively extreme. Finding redundancy rather than hiding it is part of the project’s scientific value.</figcaption></figure>
